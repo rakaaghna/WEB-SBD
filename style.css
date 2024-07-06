@@ -1,0 +1,102 @@
+/* Global Styles */
+body {
+    font-family: 'Roboto', sans-serif; /* Font sesuai dengan suasana toko bunga */
+    background-color: #f0f0f0; /* Warna latar belakang */
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333; /* Warna teks untuk h1 */
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    display: inline;
+    margin-right: 10px;
+}
+
+ul li a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Header Styles */
+.bg-gradient {
+    background: linear-gradient(90deg, #a37d5c, #7a5741); /* Gradient warna coklat tanah */
+    text-align: center;
+    padding: 100px 0;
+    color: #fff;
+    font-size: 2rem;
+}
+
+/* Card Styles */
+.card {
+    background-color: #fff; /* Background card */
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan halus */
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Efek hover */
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 1.5rem;
+    color: #333; /* Warna teks judul */
+}
+
+.card-text {
+    color: #666; /* Warna teks deskripsi */
+}
+
+.btn {
+    background-color: #a37d5c; /* Warna tombol */
+    color: #fff; /* Warna teks tombol */
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #7a5741; /* Warna tombol saat hover */
+    color: #fff;
+}
+
+/* Footer Styles */
+.footer {
+    background: linear-gradient(90deg, #a37d5c, #7a5741); /* Gradient warna coklat tanah */
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
