@@ -47,7 +47,7 @@
                     <div class="card shadow-sm mb-4">
                         <div class="card-body text-center">
                             <h5 class="card-title">Daftar Bunga</h5>
-                            <p class="card-text">Lihat dan pilih berbagai macam bunga yang ready.</p>
+                            <p class="card-text">Lihat berbagai macam bunga yang ready.</p>
                             <a href="bunga.php" class="btn btn-gradient">Lihat Bunga</a>
                         </div>
                     </div>
@@ -61,11 +61,20 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Stok Bunga</h5>
+                            <p class="card-text">Penambahan Stok Bunga</p>
+                            <a href="addstock_bunga.php" class="btn btn-gradient">Lihat Stok</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
     <footer class="bg-gradient text-white text-center py-3">
-        <p>SALAM HANGAT KELOMPOK 5 :)</p>
+        <p>Salam Hangat Kelompok 5 :D</p>
     </footer>
 </body>
 </html>
