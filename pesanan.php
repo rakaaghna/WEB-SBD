@@ -8,55 +8,85 @@ $successMessage = "";
 
 // Harga bunga per tipe
 $flowerPrices = [
-    "Mawar Jahat" => 50000,
-    "Matahari Pagi" => 30000,
-    "Lily Was A Little Girl" => 40000
+    "Mawar Jahat" => 1500000,
+    "Matahari Pagi" => 1250000,
+    "Lily Was A Little Girl" => 1000000
 ];
+
+// Mulai sesi untuk menyimpan data sementara
+session_start();
 
 // Fungsi untuk menyimpan data pemesanan
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['id_customer']) && isset($_POST['tipe_bunga']) && isset($_POST['penerima']) && isset($_POST['alamat']) && isset($_POST['quantity']) && isset($_POST['id_pesanan'])) {
+    if (isset($_POST['id_customer']) && isset($_POST['tipe_bunga']) && isset($_POST['penerima']) && isset($_POST['alamat']) && isset($_POST['id_pesanan']) && isset($_POST['id_bunga'])) {
         $customerId = $_POST['id_customer'];
         $flowerId = $_POST['tipe_bunga'];
         $receiverName = $_POST['penerima'];
         $address = $_POST['alamat'];
-        $quantity = $_POST['quantity'];
         $pesananid = $_POST['id_pesanan'];
+        $bungaId = $_POST['id_bunga'];
 
-        // Hitung total harga berdasarkan tipe bunga dan jumlah
-        $total = $flowerPrices[$flowerId] * $quantity;
+        
+        // Hitung total harga berdasarkan tipe bunga
+        $total = $flowerPrices[$flowerId];
         $discountApplied = false;
         $discountPercent = 0;
-
-        if (strpos($customerId, 'b') !== false && $total > 1000000) {
+        
+        if (strpos($customerId, 'A') !== false && $total > 1000000) {
             $total *= 0.95; // 5% discount
             $discountApplied = true;
             $discountPercent = 5;
-        } elseif (strpos($customerId, 'a') !== false) {
+        } elseif (strpos($customerId, 'B') !== false) {
             $total *= 0.90; // 10% discount
             $discountApplied = true;
             $discountPercent = 10;
         }
-
+        
         // If customer ID contains 'b', replace 'b' with 'a' to mark as a regular customer
-        if (strpos($customerId, 'b') !== false) {
-            $customerId = str_replace('b', 'a', $customerId);
+        if (strpos($customerId, 'B') !== false) {
+            $customerId = str_replace('B', 'A', $customerId);
         }
 
-        // Prepare the SQL statement
-        $sql = $conn->prepare("INSERT INTO pesanan (id_customer, tipe_bunga, penerima, alamat, total_harga, id_pesanan, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $sql->bind_param("ssssdii", $customerId, $flowerId, $receiverName, $address, $total, $pesananid, $quantity);
-
+        // Prepare the SQL statement for inserting the order
+        $sql = $conn->prepare("INSERT INTO pesanan (id_customer, tipe_bunga, penerima, alamat, total_harga, id_pesanan) VALUES (?, ?, ?, ?, ?, ?)");
+        $sql->bind_param("ssssdi", $customerId, $flowerId, $receiverName, $address, $total, $pesananid);
+        
         if ($sql->execute()) {
-            if ($discountApplied) {
-                echo "<script>alert('Pemesanan Berhasil dan Anda mendapatkan diskon $discountPercent%. Total setelah diskon adalah: Rp. " . number_format($total, 2) . "');</script>";
+            // Prepare the SQL statement for deleting the flower
+            $delete_sql = $conn->prepare("DELETE FROM bunga WHERE id_bunga = ?");
+            $delete_sql->bind_param("s", $bungaId);
+            $delete_sql->execute();
+
+            // Select available couriers
+            $courier_sql = "SELECT id_kurir, nama_kurir FROM kurir WHERE status_kurir = 'Sedia' LIMIT 1";
+            $courier_result = $conn->query($courier_sql);
+            $courier = $courier_result->fetch_assoc();
+
+            if ($courier) {
+                // Update courier status to 'Sedang Mengirim'
+                $update_courier_sql = $conn->prepare("UPDATE kurir SET status_kurir = 'Sedang Mengirim' WHERE id_kurir = ?");
+                $update_courier_sql->bind_param("i", $courier['id_kurir']);
+                $update_courier_sql->execute();
+
+                // Save courier data in session
+                $_SESSION['courier'] = $courier;
             } else {
-                echo "<script>alert('Pemesanan berhasil!');</script>";
+                // Handle case where no courier is available
+                $_SESSION['courier'] = ['id_kurir' => 0, 'nama_kurir' => 'Tidak Ada Kurir Tersedia'];
             }
+
+            // Simpan data diskon dan total harga dalam sesi
+            $_SESSION['discountApplied'] = $discountApplied;
+            $_SESSION['discountPercent'] = $discountPercent;
+            $_SESSION['total'] = $total;
+            
+            // Redirect to the same page to display the message
+            header("Location: pesanan.php?success=true");
+            exit();
         } else {
             echo "<script>alert('Error: " . $sql->error . "');</script>";
         }
-
+        
         $sql->close();
     } else {
         echo "<script>alert('ERROR: Data Tidak Lengkap.');</script>";
@@ -71,77 +101,73 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pemesanan - Flower Shop</title>
     <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,
-    wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;
-    1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" 
-    rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
     <style>
         /* General Styles */
-body {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 100;
-    margin: 0;
-    padding: 0;
-    background-color: #f8f9fa;
-    color: #333;
-}
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
 
-h1, p {
-    margin: 0;
-}
+        h1, p {
+            margin: 0;
+        }
 
-/* Container */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
 
-/* Header Styles */
-header.bg-gradient-order {
-    background: linear-gradient(90deg, #4b6cb7, #182848);
-    color: #fff;
-    padding: 40px 0;
-    text-align: center;
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+        /* Header Styles */
+        header.bg-gradient-order {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: #fff;
+            padding: 40px 0;
+            text-align: center;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-header h1 {
-    font-size: 3em;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: #fff;
-}
+        header h1 {
+            font-size: 3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fff;
+        }
 
-header p {
-    font-size: 1.2em;
-}
+        header p {
+            font-size: 1.2em;
+        }
 
-header .btn-gradient-order {
-    background: linear-gradient(90deg, #4b6cb7, #182848);
-    font-size: 23px;
-    color: white;
-    padding: 15px 30px;
-    text-decoration: none;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-    display: inline-block;
-    margin-top: 15px;
-}
+        header .btn-gradient-order {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            font-size: 23px;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            display: inline-block;
+            margin-top: 15px;
+        }
 
-header .btn-gradient-order:hover {
-    background: linear-gradient(90deg, #182848, #4b6cb7);
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2)
-}
+        header .btn-gradient-order:hover {
+            background: linear-gradient(90deg, #182848, #4b6cb7);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
 
-/* Navigation Bar */
-nav {
+        /* Navigation Bar */
+        nav {
             background-color: #4b6cb7;
             padding: 10px 0;
             text-align: center;
@@ -185,134 +211,144 @@ nav {
             width: 100%;
         }
 
+        /* Main Styles */
+        main {
+            padding: 50px 0;
+        }
 
-/* Main Styles */
-main {
-    padding: 50px 0;
-}
+        .form-container {
+            font-family: 'Poppins', sans-serif;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 0 auto; /* Center the form */
+            max-width: 600px;
+        }
 
-.form-container {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 30px;
-}
+        form {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        form select {
+            padding: 12px;
+            font-family: 'Poppins', sans-serif;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            width: 100%; /* Full width */
+            box-sizing: border-box; /* Include padding and border in width */
+        }
 
-form .form-group {
-    margin-bottom: 20px;
-}
 
-form .form-group label {
-    font-weight: 600;
-    margin-bottom: 10px;
-    display: block;
-}
+        label {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
 
-form .form-control {
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    font-size: 1em;
-    width: 100%;
-    box-sizing: border-box;
-    transition: border-color 0.3s ease;
-}
+        input[type="text"], input[type="number"], input[type="email"], textarea {
+            padding: 12px;
+            font-family: 'Poppins', sans-serif;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            width: 100%; /* Full width */
+            box-sizing: border-box; /* Include padding and border in width */
+        }
 
-form .form-control:focus {
-    border-color: #4b6cb7;
-    box-shadow: 0 0 5px rgba(75, 108, 183, 0.5);
-}
+        button[type="submit"] {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-form .btn-gradient-order {
-    background: linear-gradient(90deg, #4b6cb7, #182848);
-    font-size: 23px;
-    color: white;
-    padding: 15px 30px;
-    text-decoration: none;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-    display: inline-block;
-    margin-top: 15px;
-}
+        button[type="submit"]:hover {
+            background: linear-gradient(90deg, #182848, #4b6cb7);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
 
-form .btn-gradient-order:hover {
-    background: linear-gradient(90deg, #182848, #4b6cb7);
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
+        .download-link {
+            margin-top: 20px;
+            display: block;
+            text-align: center;
+        }
 
-/* Footer Styles */
-footer.bg-gradient-order {
-    background: linear-gradient(90deg, #4b6cb7, #182848);
-    color: white;
-    padding: 20px 0;
-    margin-top: 50px;
-    text-align: center;
-}
-
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+            color: green;
+        }
     </style>
 </head>
 <body>
     <header class="bg-gradient-order">
-        <h1>Pemesanan Bunga</h1>
-        <p>Lengkapi formulir untuk memesan bunga favorit Anda.</p>
-
-        <!-- Navigation Bar -->
-        <nav>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="customer.php">Customer</a></li>
-                <li><a href="bunga.php">Katalog</a></li>
-                <li><a href="addstock.php">Stok</a></li>
-            </ul>
-        </nav>
-
+        <div class="container">
+            <h1>Pemesanan</h1>
+            <p>Formulir Pemesanan Bunga</p>
+        </div>
     </header>
-    <main class="container my-5">
-        <div class="row">
-            <div class="col-md-6 mx-auto form-container">
-                <form id="orderForm" class="shadow-sm p-4 bg-white rounded" method="POST" action="pesanan.php">
-                    <div class="form-group">
-                        <label for="id_pesanan">ID Pesanan:</label>
-                        <input type="text" class="form-control" id="id_pesanan" name="id_pesanan" placeholder="Masukkan ID Pesanan" required>
-                    </div>
-                    <div class="form-group">
+
+    <nav>
+        <ul>
+            <li><a href="kurir.php">Kurir</a></li>
+            <li><a href="bunga.php">Katalog</a></li>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="customer.php">Customer</a></li>
+            <li><a href="addstock_bunga.php">Stok</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="form-container">
+                <?php if (isset($_GET['success']) && $_GET['success'] == 'true') : ?>
+                    <p class="message">Pemesanan Anda berhasil!</p>
+                    <p class="message">Diskon: <?php echo $_SESSION['discountApplied'] ? $_SESSION['discountPercent'] . '%' : 'Tidak ada'; ?></p>
+                    <p class="message">Total Harga: Rp <?php echo number_format($_SESSION['total'], 2, ',', '.'); ?></p>
+                    <p class="message">Kurir: <?php echo $_SESSION['courier']['nama_kurir']; ?></p>
+                    <a href="download.php" class="download-link">Download Detail Pesanan</a>
+                <?php else : ?>
+                    <form action="pesanan.php" method="POST">
                         <label for="id_customer">ID Customer:</label>
-                        <input type="text" class="form-control" id="id_customer" name="id_customer" placeholder="Masukkan ID Customer" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="tipe_bunga">Tipe Bunga:</label>
-                        <select class="form-control" id="tipe_bunga" name="tipe_bunga" required>
+                        <input type="text" id="id_customer" name="id_customer" required>
+
+                        <label class="option" for="tipe_bunga">Tipe Bunga:</label>
+                        <select id="tipe_bunga" name="tipe_bunga" required>
                             <option value="Mawar Jahat">Mawar Jahat</option>
                             <option value="Matahari Pagi">Matahari Pagi</option>
                             <option value="Lily Was A Little Girl">Lily Was A Little Girl</option>
                         </select>
-                    </div>
-                    <div class="form-group">
+
                         <label for="penerima">Nama Penerima:</label>
-                        <input type="text" class="form-control" id="penerima" name="penerima" placeholder="Masukkan Nama Penerima" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="alamat">Alamat Penerima:</label>
-                        <textarea class="form-control" id="alamat" name="alamat" rows="3" placeholder="Masukkan Alamat Penerima" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="quantity">Jumlah Bunga:</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Masukkan Jumlah Bunga" required>
-                    </div>
-                    <div class="form-group text-center">
-                        <button type="submit" class="btn btn-lg btn-gradient-order">Buat Pesanan</button>
-                    </div>
-                </form>
+                        <input type="text" id="penerima" name="penerima" required>
+
+                        <label for="alamat">Alamat Pengiriman:</label>
+                        <textarea id="alamat" name="alamat" required></textarea>
+
+                        <label for="id_pesanan">ID Pesanan:</label>
+                        <input type="text" id="id_pesanan" name="id_pesanan" required>
+
+                        <label for="id_bunga">ID Bunga:</label>
+                        <input type="text" id="id_bunga" name="id_bunga" required>
+
+                        <button type="submit">Kirim Pesanan</button>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
     </main>
-    <footer class="bg-gradient-order text-white text-center py-3">
-        <p>&copy; SEHAT SEHAT SEMUA MAKASIH DAH BELI.</p>
-    </footer>
 </body>
 </html>
-
