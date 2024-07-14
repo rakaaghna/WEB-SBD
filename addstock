@@ -1,73 +1,79 @@
 <?php
-// Sertakan file koneksi database
 include('db.php');
 
-// Fungsi untuk menambah stok bunga
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_stock'])) {
-    $flowerId = $_POST['flower_id'];
-    $flowerType = $_POST['flower_type'];
-    $size = $_POST['size'];
-    $price = 0;
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['add_stock'])) {
+        $flowerId = $_POST['flower_id'];
+        $flowerType = $_POST['flower_type'];
+        $size = $_POST['size'];
+        $price = 0;
 
-    // Tentukan harga berdasarkan ukuran
-    switch($size) {
-        case 'Small':
-            $price = 80000;
-            break;
-        case 'Medium':
-            $price = 250000;
-            break;
-        case 'Large':
-            $price = 500000;
-            break;
-    }
+        switch($size) {
+            case 'Small':
+                $price = 500000;
+                break;
+            case 'Medium':
+                $price = 800000;
+                break;
+            case 'Large':
+                $price = 1000000;
+                break;
+        }
 
-    // Query untuk menambahkan stok bunga ke database
-    $sql = "INSERT INTO bunga (id_bunga, tipe_bunga, harga_bunga, ukuran_bunga) VALUES ('$flowerId', '$flowerType', '$price', '$size')";
+        $sql = "INSERT INTO bunga (id_bunga, tipe_bunga, harga_bunga, ukuran_bunga) VALUES ('$flowerId', '$flowerType', '$price', '$size')";
 
-    if ($conn->query($sql) === TRUE) {
-        echo "<script>alert('Stok bunga berhasil ditambahkan!');</script>";
-    } else {
-        echo "<script>alert('Error: " . $sql . "<br>" . $conn->error . "');</script>";
-    }
-}
-
-// Fungsi untuk menghapus stok bunga
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_stock'])) {
-    $flowerId = $_POST['flower_id'];
-
-    // Query untuk menghapus stok bunga dari database
-    $sql = "DELETE FROM bunga WHERE id_bunga = '$flowerId'";
-
-    if ($conn->query($sql) === TRUE) {
-        if ($conn->affected_rows > 0) {
-            echo "<script>alert('Stok bunga berhasil dihapus!');</script>";
+        if ($conn->query($sql) === TRUE) {
+            echo "<script>alert('Stok bunga berhasil ditambahkan!');</script>";
         } else {
-            echo "<script>alert('Maaf! Stok bunga tidak ditemukan');</script>";
+            echo "<script>alert('Error: " . $sql . "<br>" . $conn->error . "');</script>";
         }
-    } else {
-        echo "<script>alert('Error: " . $sql . "<br>" . $conn->error . "');</script>";
+    }
+
+    if (isset($_POST['delete_stock'])) {
+        $flowerId = $_POST['flower_id'];
+
+        $sql = "DELETE FROM bunga WHERE id_bunga = '$flowerId'";
+
+        if ($conn->query($sql) === TRUE) {
+            if ($conn->affected_rows > 0) {
+                echo "<script>alert('Stok bunga berhasil dihapus!');</script>";
+            } else {
+                echo "<script>alert('Maaf! Stok bunga tidak ditemukan');</script>";
+            }
+        } else {
+            echo "<script>alert('Error: " . $sql . "<br>" . $conn->error . "');</script>";
+        }
+    }
+
+    if (isset($_POST['showall_stock'])) {
+        $sql_all = "SELECT * FROM bunga";
+        $result_all = $conn->query($sql_all);
+        $allFlowers = [];
+        if ($result_all->num_rows > 0) {
+            while ($row = $result_all->fetch_assoc()) {
+                $allFlowers[] = $row;
+            }
+        }
+    }
+
+    if (isset($_POST['update_stock'])) {
+        $flowerId = $_POST['flower_id'];
+        $newPrice = $_POST['new_price'];
+
+        $sql = "UPDATE bunga SET harga_bunga = '$newPrice' WHERE id_bunga = '$flowerId'";
+
+        if ($conn->query($sql) === TRUE) {
+            echo "<script>alert('Harga bunga berhasil diubah!');</script>";
+        } else {
+            echo "<script>alert('Error: " . $sql . "<br>" . $conn->error . "');</script>";
+        }
     }
 }
 
-// Fungsi untuk menampilkan semua stok bunga
-$allFlowers = [];
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['showall_stock'])) {
-    $sql_all = "SELECT * FROM bunga";
-    $result_all = $conn->query($sql_all);
-    if ($result_all->num_rows > 0) {
-        while ($row = $result_all->fetch_assoc()) {
-            $allFlowers[] = $row;
-        }
-    }
-}
-
-// Query untuk mengambil jumlah stok bunga yang tersedia
 $sql_count = "SELECT COUNT(*) AS total FROM bunga";
 $result = $conn->query($sql_count);
 $totalBunga = $result->fetch_assoc()['total'];
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -75,218 +81,232 @@ $totalBunga = $result->fetch_assoc()['total'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Bunga - Flower Shop</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="styles/style.css">
-
-    <!-- FONT -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-<style> 
-    * {
-        font-family: "Poppins", sans-serif;
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <style>
+        /* Existing CSS styles */
+        * {
+            font-family: "Poppins", sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        h1.bg-gradient1 {
+            font-weight: 600;
+            font-size: 50px;
+        }
+        header.bg-gradient-flowers {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: #fff;
+            padding: 30px 0;
+            text-align: center;
+        }
+        header .btn {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        header .btn:hover {
+            background: linear-gradient(90deg, #182848, #4b6cb7);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        nav {
+    background-color: #4b6cb7;
+    padding: 10px 0;
+    text-align: center;
     }
-    body {
-        font-family: 'Montserrat', sans-serif;
-        margin: 0;
+
+    nav ul {
+        list-style-type: none;
         padding: 0;
-        background-color: #f8f9fa;
-        color: #333;
-    }
-
-    h1.bg-gradient1 {
-        font-weight: 600;
-        font-size: 50px;
-    }
-
-    h1, p {
         margin: 0;
     }
 
-    /* Container */
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 15px;
+    nav ul li {
+        display: inline;
+        margin-right: 20px;
     }
 
-    /* Header Styles */
-    header.bg-gradient-flowers {
-        background: linear-gradient(90deg, #4b6cb7, #182848);
-        color: #fff;
-        padding: 30px 0;
-        text-align: center;
-    }
-
-    header h1 {
-        font-size: 40px;
-        margin-bottom: 10px;
-    }
-
-    header p {
+    nav ul li a {
+        color: white;
+        text-decoration: none;
         font-size: 1.2em;
+        transition: color 0.3s ease;
+        position: relative;
     }
 
-    header .btn {
-        background: linear-gradient(90deg, #4b6cb7, #182848);
-        color: white;
-        padding: 15px 30px;
-        text-decoration: none;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-        display: inline-block;
-        margin-top: 15px;
+    nav ul li a::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -5px;
+        width: 0;
+        height: 2px;
+        background-color: white;
+        transition: width 0.3s ease;
     }
 
-    header .btn:hover {
-        background: linear-gradient(90deg, #182848, #4b6cb7);
-        color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    nav ul li a:hover {
+        color: #f5f5f5;
     }
 
-    /* Main Content Styling */
-    main.container.my-5 {
-        margin-top: 3rem;
-        margin-bottom: 3rem;
-    }
-
-    .center-form {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-    }
-
-    .form-container {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 30px;
+    nav ul li a:hover::after {
         width: 100%;
-        max-width: 500px;
-        transition: transform 0.5s ease;
     }
+        main.container.my-5 {
+            margin-top: 3rem;
+            margin-bottom: 3rem;
+        }
+        .center-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        .form-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            transition: transform 0.5s ease;
+        }
+        .flower-info p {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #4b6cb7;
+            outline: none;
+            box-shadow: 0 0 5px rgba(75, 108, 183, 0.5);
+        }
+        select.form-control {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: url('data:image/svg+xml;charset=US-ASCII,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='5' viewBox='0 0 10 5'%3e%3cpath fill='%23333' fill-rule='evenodd' d='M0 0l5 5 5-5z'/%3e%3c/svg%3e') no-repeat right 10px center;
+            background-size: 10px 5px;
+        }
+        button.btn {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        button.btn:hover {
+            background: linear-gradient(90deg, #182848, #4b6cb7);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .container-transition {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            transition: transform 0.5s ease;
+        }
+        .flower-table {
+            width: 100%;
+            max-width: 700px;
+            margin-left: 30px;
+        }
+        .flower-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        .flower-table th, .flower-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .flower-table th {
+            background-color: #4b6cb7;
+            color: white;
+        }
+        .flower-table td {
+            background-color: #f9f9f9;
+        }
+        footer.bg-gradient-flowers {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .update-container {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+            transition: transform 0.5s ease;
+        }
+        .update-container.active {
+            display: block;
+        }
+    </style>
+    <script>
+        function showAllFlowers() {
+            document.querySelector('.form-container').style.transform = 'translateX(-150px)';
+            document.querySelector('.flower-table').style.display = 'block';
+        }
 
-    .flower-info p {
-        text-align: center;
-        font-size: 1.1em;
-        margin-bottom: 20px;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 2px solid #ccc;
-        border-radius: 5px;
-        transition: border-color 0.3s ease;
-    }
-
-    .form-control:focus {
-        border-color: #4b6cb7;
-        outline: none;
-        box-shadow: 0 0 5px rgba(75, 108, 183, 0.5);
-    }
-
-    select.form-control {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        background: url('data:image/svg+xml;charset=US-ASCII,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='5' viewBox='0 0 10 5'%3e%3cpath fill='%23333' fill-rule='evenodd' d='M0 0l5 5 5-5z'/%3e%3c/svg%3e') no-repeat right 10px center;
-        background-size: 10px 5px;
-    }
-
-    button.btn {
-        background: linear-gradient(90deg, #4b6cb7, #182848);
-        color: white;
-        padding: 15px 30px;
-        text-decoration: none;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-        display: inline-block;
-        margin-top: 15px;
-    }
-
-    button.btn:hover {
-        background: linear-gradient(90deg, #182848, #4b6cb7);
-        color: white;
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Transition container */
-    .container-transition {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        transition: transform 0.5s ease;
-    }
-
-    /* Table for showing all flowers */
-    .flower-table {
-        width: 100%;
-        max-width: 700px;
-        margin-left: 30px;
-    }
-
-    .flower-table table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 30px;
-    }
-
-    .flower-table th, .flower-table td {
-        padding: 10px;
-        border: 1px solid #ddd;
-        text-align: left;
-    }
-
-    .flower-table th {
-        background-color: #4b6cb7;
-        color: white;
-    }
-
-    .flower-table td {
-        background-color: #f9f9f9;
-    }
-
-    /* Footer Styles */
-    footer.bg-gradient-flowers {
-        background: linear-gradient(90deg, #4b6cb7, #182848);
-        color: white;
-        padding: 20px 0;
-        text-align: center;
-    }
-</style>
-
-<script>
-    function showAllFlowers() {
-        document.querySelector('.form-container').style.transform = 'translateX(-150px)';
-        document.querySelector('.flower-table').style.display = 'block';
-    }
-</script>
-
+        function showUpdateForm() {
+            document.querySelector('.update-container').classList.add('active');
+        }
+    </script>
 </head>
 <body>
     <header class="bg-gradient-flowers">
         <h1 class="bg-gradient1">Stok Bunga</h1>
         <p>Isi Formulir Dibawah</p>
-        <a href="index.php" class="btn btn-lg btn-gradient-flowers">HOME PAGE</a>
+        <nav>
+            <ul>
+                <li><a href="pesanan.php">Pesanan</a></li>
+                <li><a href="bunga.php">Katalog</a></li>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="customer.php">Customer</a></li>
+                <li><a href="kurir.php">Kurir</a></li>
+            </ul>
+        </nav>
     </header>
     <main class="container my-5">
         <div class="container-transition">
@@ -295,11 +315,11 @@ $totalBunga = $result->fetch_assoc()['total'];
                     <div class="flower-info">
                         <p>Jumlah bunga yang tersedia saat ini: <strong><?php echo $totalBunga; ?></strong></p>
                     </div>
-                    <form action="addstock_bunga.php" method="POST">                 
+                    <form action="addstock_bunga.php" method="POST">
                         <div class="form-group">
                             <label for="flower_id">ID Bunga:</label>
                             <input type="text" class="form-control" id="flower_id" name="flower_id" placeholder="Masukkan ID Bunga" required>
-                        </div>                
+                        </div>
                         <div class="form-group">
                             <label for="flower_type">Tipe Bunga:</label>
                             <select class="form-control" id="flower_type" name="flower_type" required>
@@ -318,33 +338,22 @@ $totalBunga = $result->fetch_assoc()['total'];
                         </div>
                         <button type="submit" name="add_stock" class="btn btn-lg btn-gradient-flowers">Add</button>
                         <button type="submit" name="delete_stock" class="btn btn-lg btn-gradient-flowers">Delete</button>
-                        <button type="button" name="showall_stock" class="btn btn-lg btn-gradient-flowers" onclick="showAllFlowers()">Show All</button>
-                        <a href="index.php" class="btn btn-lg btn-gradient-flowers">Update</a>
+                        <button type="button" class="btn btn-lg btn-gradient-flowers" onclick="showUpdateForm()">Update</button>
                     </form>
                 </div>
-            </div>
-            <div class="flower-table" style="display: none;">
-                <h2>Daftar Semua Bunga</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID Bunga</th>
-                            <th>Tipe Bunga</th>
-                            <th>Harga Bunga</th>
-                            <th>Ukuran Bunga</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($allFlowers as $flower) { ?>
-                            <tr>
-                                <td><?php echo $flower['id_bunga']; ?></td>
-                                <td><?php echo $flower['tipe_bunga']; ?></td>
-                                <td><?php echo $flower['harga_bunga']; ?></td>
-                                <td><?php echo $flower['ukuran_bunga']; ?></td>
-                            </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
+                <div class="update-container">
+                    <form action="addstock_bunga.php" method="POST">
+                        <div class="form-group">
+                            <label for="flower_id_update">ID Bunga:</label>
+                            <input type="text" class="form-control" id="flower_id_update" name="flower_id" placeholder="Masukkan ID Bunga" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new_price">Harga Baru:</label>
+                            <input type="number" class="form-control" id="new_price" name="new_price" placeholder="Masukkan Harga Baru" required>
+                        </div>
+                        <button type="submit" name="update_stock" class="btn btn-lg btn-gradient-flowers">Update</button>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
