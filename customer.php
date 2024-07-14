@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "<script>document.addEventListener('DOMContentLoaded', function() { document.querySelector('.container').classList.add('updated'); });</script>";
         }
     } elseif (isset($_POST['updateBtn'])) {
-        $newCustomerId = str_replace('b', 'a', $customerId);
+        $newCustomerId = str_replace('B', 'A', $customerId);
         $sql = "UPDATE customers SET id_customer = '$newCustomerId' WHERE id_customer = '$customerId'";
         if ($conn->query($sql) === TRUE) {
             $message = "ID customer berhasil diubah dari $customerId menjadi $newCustomerId!";
@@ -266,12 +266,14 @@ footer {
     <header class="bg-gradient-customer">
         <h1>Data Customer</h1>
         <p>Masukkan atau cari data customer.</p>
+        <p>Awali ID dengan B(Angka NIK).</p>
         <nav>
             <ul>
-                <li><a href="index.php">Home</a></li>
                 <li><a href="pesanan.php">Pesanan</a></li>
                 <li><a href="bunga.php">Katalog</a></li>
-                <li><a href="addstock.php">Stok</a></li>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="addstock_bunga.php">Stok</a></li>
+                <li><a href="kurir.php">Kurir</a></li>
             </ul>
         </nav>
     </header>
@@ -313,6 +315,4 @@ footer {
     </footer>
 </body>
 </html>
-
-
 
