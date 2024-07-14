@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -129,8 +128,15 @@ footer.bg-gradient {
         </div>
     </header>
     <section class="py-5">
-        <div class="container">
-            <div class="grid">
+        <div class="grid">
+                <div class="container">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Stok Bunga</h5>
+                            <p class="card-text">Penambahan Stok Bunga</p>
+                            <a href="addstock_bunga.php" class="btn btn-gradient">Lihat Stok</a>
+                        </div>
+                    </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">Customer</h5>
@@ -154,9 +160,9 @@ footer.bg-gradient {
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">Stok Bunga</h5>
-                        <p class="card-text">Penambahan Stok Bunga</p>
-                        <a href="addstock.php" class="btn btn-gradient">Lihat Stok</a>
+                        <h5 class="card-title">Daftar Kurir</h5>
+                        <p class="card-text">Cek Pengantar Anda</p>
+                        <a href="kurir.php" class="btn btn-gradient">Lihat Daftar</a>
                     </div>
                 </div>
             </div>
